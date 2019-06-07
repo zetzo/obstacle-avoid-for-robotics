@@ -1,0 +1,57 @@
+#define Motor OUT_AC   //driving motor
+#define R_Motor OUT_A   //Right driving motor
+#define L_Motor OUT_C   //Left driving motor
+#define US SENSOR_TYPE_LOWSPEED_9V //define US as the Ultra Sonic sensor
+#define US_IN IN_4                 //US sensor input
+#define Direction OUT_B            //US sensor and driving direction motor
+#define rotate_angle 45  //angle rotated per term
+ 
+int opst;  //distant to obstacle
+int left;  // 40 degree to the left
+int right; // 40 degree to the right
+int RunTime; // total run time
+int run;     //straight run time
+int orit[5];  //vector to record the orientation, size=5
+int i_orit;  // count for orientation
+int orit_d;   //orientation in degree
+
+sub obstacle()
+{
+   RunTime = 0;
+   i_orit = 0;
+   while(i_orit < 5)
+   {
+   opst = SensorUS(US_IN);    //read US value
+   run = 1000;                //set motor to run 1 sec
+   if(opst > 30)       //check if obstacle within 30cm
+      {
+      OnFwdSync(Motor,50,0);
+                           //continue FW if no obstacle
+      Wait(run);               //run 1 sec
+      RunTime += run;          //calculate total run time
+      orit[i_orit] = orit_d;   //set orit[] in it's orientation
+      i_orit++;
+      }
+   else{
+      Off(Motor);              //stop motor if obstacle found
+      //check best path
+      RotateMotor(Direction,50,-40);
+      left = SensorUS(US_IN);
+      RotateMotor(Direction,50,80);
+      right = SensorUS(US_IN);
+      if(left < right)         //pick best path (left or right)
+         {
+         RotateMotor(L_Motor,50,135);  //rotate 45 degree to the right
+         RotateMotor(Direction,50,-40);
+         orit_d -= rotate_angle;       //decrease orientation by 45 degree
+         }
+      else{
+         RotateMotor(Direction,50,-80);
+         RotateMotor(R_Motor,50,135);    //rotate 45 degree to the left
+         RotateMotor(Direction,50,40);
+         orit_d += rotate_angle;        //increase orientation by 45 degree
+         }
+      }
+   }
+     Off(Motor);
+}           // end of sub obstacle
